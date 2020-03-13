@@ -55,6 +55,15 @@
 
         </div>
         <div class="row">
+            <div class="col-md-4">
+                <button type="submit" id="submit_manufacturers" name="submit_manufacturers" class="btn btn-default pull-right">
+                    <i class="process-icon-save"></i>{l s='Export Manufacturers' mod="pp_csvDataExporter"}</button>
+
+                </div>
+            <div class="col-md-4">alias_import</div>
+            <div class="col-md-4">store_contacts</div>
+        </div>
+        <div class="row">
             <div class="col-md-4">suppliers_import</div>
             <div class="col-md-4">alias_import</div>
             <div class="col-md-4">store_contacts</div>

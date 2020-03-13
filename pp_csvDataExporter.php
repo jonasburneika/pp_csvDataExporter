@@ -80,6 +80,13 @@ class Pp_csvDataExporter extends Module
         if (((bool)Tools::isSubmit('submit_products_attributes')) == true) {
             $this->submit_products_attributes();
         }
+        if (((bool)Tools::isSubmit('submit_manufacturers')) == true) {
+            $this->submit_manufacturers();
+        }
+        if (((bool)Tools::isSubmit('submit_addresses')) == true) {
+            $this->submit_addresses();
+        }
+
 
         $this->context->smarty->assign([
             'module_dir' => $this->_path,
@@ -151,11 +158,26 @@ class Pp_csvDataExporter extends Module
      */
     protected function postCategoriesExport()
     {
-        echo __FILE__ . ':' . __LINE__ . '<br/ >';
-        echo "<pre>";
-        var_dump("postCategoriesExport");
-        echo "</pre>";
-        die;
+        $id_lang = 1;
+        $id_shop = 1;
+        $sql = 'SELECT 
+`' . _DB_PREFIX_ . 'category`.`id_category`,
+`' . _DB_PREFIX_ . 'category`.active,
+`' . _DB_PREFIX_ . 'category_lang`.name,
+cat2.name AS "Parent category", 
+IF(`' . _DB_PREFIX_ . 'category`.id_category = 1, 1, 0) AS "Root category (0/1)",
+`' . _DB_PREFIX_ . 'category_lang`.description,
+`' . _DB_PREFIX_ . 'category_lang`.meta_title,
+`' . _DB_PREFIX_ . 'category_lang`.meta_keywords,
+`' . _DB_PREFIX_ . 'category_lang`.meta_description,
+`' . _DB_PREFIX_ . 'category_lang`.link_rewrite
+FROM `' . _DB_PREFIX_ . 'category_lang`
+JOIN `' . _DB_PREFIX_ . 'category` ON `' . _DB_PREFIX_ . 'category`.id_category = `' . _DB_PREFIX_ . 'category_lang`.id_category
+LEFT JOIN `' . _DB_PREFIX_ . 'category_lang` as cat2 ON cat2.id_category = `' . _DB_PREFIX_ . 'category`.id_parent AND cat2.id_lang = '. $id_lang .' AND cat2.id_shop = '. $id_shop .'
+WHERE `' . _DB_PREFIX_ . 'category_lang`.id_lang ='. $id_lang . ' and `' . _DB_PREFIX_ . 'category_lang`.id_shop ='. $id_shop;
+
+
+        return $this->arrayToCsv(Db::getInstance()->executeS($sql), "categories");
     }
 
     protected function postProductsExport()
@@ -293,8 +315,32 @@ WHERE `pl`.id_lang = ' . $id_lang;
         return $this->arrayToCsv(Db::getInstance()->executeS($sql), "product_attributes");
     }
 
+    private function submit_manufacturers()
+    {
+        $id_lang = 1;
+        $sql ='SELECT 
+`' . _DB_PREFIX_ . 'manufacturer`.`id_manufacturer`, 
+`' . _DB_PREFIX_ . 'manufacturer`.active, 
+`' . _DB_PREFIX_ . 'manufacturer`.name, 
+`' . _DB_PREFIX_ . 'manufacturer_lang`.description, 
+`' . _DB_PREFIX_ . 'manufacturer_lang`.meta_title, 
+`' . _DB_PREFIX_ . 'manufacturer_lang`.meta_keywords, 
+`' . _DB_PREFIX_ . 'manufacturer_lang`.meta_description
+FROM `' . _DB_PREFIX_ . 'manufacturer`
+JOIN `' . _DB_PREFIX_ . 'manufacturer_lang` ON `' . _DB_PREFIX_ . 'manufacturer`.id_manufacturer = `' . _DB_PREFIX_ . 'manufacturer_lang`.id_manufacturer
+WHERE `'._DB_PREFIX_ .'manufacturer_lang`.id_lang = '.$id_lang;
+
+        return $this->arrayToCsv(Db::getInstance()->executeS($sql), "manufacturers");
+    }
+
+    private function submit_addresses()
+    {
+
+    }
+
     private function arrayToCsv($array, $dataType)
     {
+
         $result = [];
         foreach ($array as $rowNo => $row) {
             foreach ($row as $key => $value) {
@@ -305,7 +351,7 @@ WHERE `pl`.id_lang = ' . $id_lang;
                     $images = explode(',', $value);
                     $value = [];
                     foreach ($images as $image) {
-                        $value[] = Configuration::get('PS_SHOP_DOMAIN') . '/img/p/' . implode('/', str_split($image)) . '/' . $image . '.jpg';
+                        $value[] = Configuration::get('`' . _DB_PREFIX_ . 'SHOP_DOMAIN') . '/img/p/' . implode('/', str_split($image)) . '/' . $image . '.jpg';
                     }
                     $value = implode(",", $value);
                 }
